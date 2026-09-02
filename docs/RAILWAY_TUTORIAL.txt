@@ -1,0 +1,167 @@
+MITZ MLBB CHECKER — RAILWAY DEPLOY (STEP BY STEP)
+
+================================================
+PART 1 — BACKEND ON RAILWAY
+================================================
+
+1. Go to https://railway.app and login (GitHub)
+
+2. Click New Project
+
+3. Choose Empty Project (or Deploy from GitHub if you push the backend folder)
+
+4. Inside the project click Add Service → Empty Service
+
+5. Open the service → Settings → set Name to mitz-api
+
+6. Go to Settings → Source
+   - If using GitHub: connect repo and set Root Directory to backend
+   - If not using GitHub: use Railway CLI or paste files via dashboard
+
+EASIEST WAY WITH FILES:
+
+A. Install Railway CLI on your PC:
+   npm i -g @railway/cli
+   railway login
+
+B. Open terminal in the backend folder (the one with app.py Procfile requirements.txt):
+   railway link
+   (select your project and the mitz-api service)
+
+C. Deploy:
+   railway up
+
+7. After first deploy, open Variables tab and add these:
+
+MITZ_SECRET
+paste a long random string (example: open python and run secrets.token_hex(32))
+
+MITZ_ADMIN_TOKEN
+paste another long random string (keep this private — bot will use it)
+
+MITZ_UPSTREAM
+https://checkton.online/backend
+
+MITZ_UPSTREAM_KEY
+paste YOUR private Checkton / upstream API key
+
+MITZ_OWNER_TG
+your telegram user id (number)
+
+MITZ_OWNER_CREDITS
+99999
+
+PORT is auto-set by Railway — do not override unless needed
+
+8. Settings → Networking → Generate Domain
+   copy the public URL
+   example: https://mitz-api-production-xxxx.up.railway.app
+
+9. Open browser:
+   https://YOUR-DOMAIN/health
+   should return {"ok":true,"service":"mitz",...}
+
+================================================
+PART 2 — TELEGRAM BOT (can also run on Railway)
+================================================
+
+Option A — second Railway service
+
+1. Same project → New Service → Empty Service → name mitz-bot
+
+2. Put bot folder as root (mitz_bot.py + requirements.txt)
+
+3. Variables for mitz-bot service:
+
+MITZ_BOT_TOKEN
+token from @BotFather
+
+MITZ_API_BASE
+https://YOUR-DOMAIN
+(the backend public URL from Part 1 — no trailing slash)
+
+MITZ_ADMIN_TOKEN
+SAME value as backend MITZ_ADMIN_TOKEN
+
+MITZ_OWNER_IDS
+your telegram id (you can put multiple: 123,456)
+
+4. Settings → Deploy
+   Start Command:
+   python mitz_bot.py
+
+Option B — run bot on your PC / VPS
+
+export MITZ_BOT_TOKEN=...
+export MITZ_API_BASE=https://YOUR-DOMAIN
+export MITZ_ADMIN_TOKEN=...
+export MITZ_OWNER_IDS=YOUR_TG_ID
+python mitz_bot.py
+
+================================================
+PART 3 — CLIENT (users)
+================================================
+
+1. Give users only mitz_tool.py
+
+2. User runs:
+   python mitz_tool.py
+
+3. Screen asks:
+   Api Key:
+   (paste key from Telegram bot /key)
+
+   Api Base Url:
+   (paste your Railway domain: https://mitz-api-production-xxxx.up.railway.app)
+
+4. After valid key → big Mitz banner + menu unlocks
+
+5. Single check costs 1 credit
+   Bulk every line costs 1 credit
+   No credits → shows No Credits.... then return menu
+
+================================================
+PART 4 — BOT COMMANDS FOR YOU
+================================================
+
+/start
+/key          → get or view API key
+/balance      → credits
+/revoke       → kill key and issue new one
+/addcredits <tg_id> <amount>   (owner only)
+/stats        (owner only)
+
+================================================
+PART 5 — QUICK CHECKLIST
+================================================
+
+Backend Variables set:
+MITZ_SECRET
+MITZ_ADMIN_TOKEN
+MITZ_UPSTREAM
+MITZ_UPSTREAM_KEY
+MITZ_OWNER_TG
+MITZ_OWNER_CREDITS
+
+Bot Variables set:
+MITZ_BOT_TOKEN
+MITZ_API_BASE = backend public URL
+MITZ_ADMIN_TOKEN = same as backend
+MITZ_OWNER_IDS = your tg id
+
+Domain generated and /health works
+
+Bot online and /key returns a MITZ-xxxx key
+
+Client asks Api Key + Api Base Url then unlocks
+
+================================================
+NOTES
+================================================
+
+Never put MITZ_UPSTREAM_KEY in the client
+Never put MITZ_ADMIN_TOKEN in the client
+Client only talks to your Railway domain
+Upstream Checkton stays behind your gateway
+Revoke from bot kills the key instantly
+SQLite file lives on Railway volume (free tier may reset — for serious use add volume or move DB later)
